@@ -1,0 +1,380 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1561\cocoasubrtf200
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\cssrgb\c0\c0\c0;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\deftab720
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\partightenfactor0
+
+\f0\b\fs20 \cf2 \expnd0\expndtw0\kerning0
+\ul \ulc2 Question 1\
+\ulnone \
+* Use three queries:\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\partightenfactor0
+
+\b0 \cf2 \
+a. one for the number of distinct campaigns,\
+b. one for the number of distinct sources,\
+c. one to find how they are related.\
+\
+a. SELECT COUNT (DISTINCT utm_campaign)\
+FROM page_visits;\
+\
+b. SELECT COUNT (DISTINCT utm_source)\
+FROM page_visits;\
+\
+c. SELECT DISTINCT utm_source, utm_campaign\
+FROM page_visits;\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\partightenfactor0
+
+\b \cf2 \ul Question 2\
+\ulnone \
+*Find the distinct values of the page_name column.\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\partightenfactor0
+
+\b0 \cf2 SELECT DISTINCT page_name\
+FROM page_visits;\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\partightenfactor0
+
+\b \cf2 \ul Question 3\
+\ulnone \
+*Count the number of first touches for each\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\partightenfactor0
+
+\b0 \cf2 \
+WITH first_touch AS (\
+    SELECT user_id,\
+                   MIN(timestamp) as first_touch_at\
+    FROM page_visits\
+    GROUP BY user_id),\
+ft_attr AS (\
+  SELECT ft.user_id,\
+         ft.first_touch_at,\
+         pv.utm_source,\
+         pv.utm_campaign,\
+         pv.page_name\
+  FROM first_touch AS 'ft'\
+  JOIN page_visits AS 'pv'\
+    ON ft.user_id = pv.user_id\
+    AND ft.first_touch_at = pv.timestamp\
+)\
+SELECT ft_attr.utm_source,\
+               ft_attr.utm_campaign,\
+              COUNT(*)\
+FROM ft_attr\
+GROUP BY 1, 2\
+ORDER BY 3 DESC;\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\partightenfactor0
+
+\b \cf2 \ul Question 4\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\partightenfactor0
+
+\b0 \cf2 \ulnone \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\partightenfactor0
+
+\b \cf2 *Group by campaign and count the number of last touches for each.\
+\ul \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\partightenfactor0
+
+\b0 \cf2 \ulnone WITH last_touch AS (\
+    SELECT user_id,\
+                   MAX(timestamp) as last_touch_at\
+    FROM page_visits\
+    GROUP BY user_id),\
+lt_attr AS (\
+  SELECT lt.user_id,\
+         lt.last_touch_at,\
+         pv.utm_source,\
+         pv.utm_campaign,\
+         pv.page_name\
+  FROM last_touch AS 'lt'\
+  JOIN page_visits AS 'pv'\
+    ON lt.user_id = pv.user_id\
+    AND lt.last_touch_at = pv.timestamp\
+)\
+SELECT lt_attr.utm_source,\
+               lt_attr.utm_campaign,\
+               COUNT(*)\
+FROM lt_attr\
+GROUP BY 1, 2\
+ORDER BY 3 DESC;
+\b \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\partightenfactor0
+\cf2 \ul Question 5\
+\
+\ulnone *Count the distinct users who visited the page named 4 - purchase.\
+\ul \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\partightenfactor0
+
+\b0 \cf2 \ulnone SELECT COUNT (DISTINCT user_id)\
+FROM page_visits\
+WHERE page_name = '4 - purchase';\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\partightenfactor0
+
+\b \cf2 \
+\ul Question 6\
+\
+\ulnone *How many last touches on the purchase page is each campaign responsible for?\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\partightenfactor0
+
+\b0 \cf2 WITH last_touch AS (\
+    SELECT user_id,\
+                   MAX(timestamp) as last_touch_at\
+    FROM page_visits\
+    WHERE page_name = '4 - purchase'\
+    GROUP BY user_id),\
+lt_attr AS (\
+  SELECT lt.user_id,\
+         lt.last_touch_at,\
+         pv.utm_source,\
+         pv.utm_campaign,\
+         pv.page_name\
+  FROM last_touch AS 'lt'\
+  JOIN page_visits AS 'pv'\
+    ON lt.user_id = pv.user_id\
+    AND lt.last_touch_at = pv.timestamp\
+)\
+SELECT lt_attr.utm_source,\
+               lt_attr.utm_campaign,\
+               COUNT(*)\
+FROM lt_attr \
+GROUP BY 1, 2\
+ORDER BY 3 DESC;\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\partightenfactor0
+
+\b \cf2 Typical User Journey\
+*First Touch Attribution\
+\
+\pard\pardeftab720\sl280\partightenfactor0
+
+\b0 \cf2 WITH first_touch AS (\
+\'a0 \'a0 SELECT user_id,\
+\'a0 \'a0 \'a0 \'a0            MIN(timestamp) as first_touch_at\
+\'a0 \'a0 FROM page_visits\
+\'a0 \'a0 WHERE page_name = \'911 \'96 landing_page'\
+\'a0 \'a0 GROUP BY user_id),\
+ft_attr AS (\
+\'a0 SELECT ft.user_id,\
+\'a0\'a0 \'a0 \'a0 \'a0         ft.first_touch_at,\
+\'a0\'a0 \'a0 \'a0 \'a0        pv.utm_source,\
+\'a0\'a0 \'a0 \'a0 \'a0        pv.utm_campaign,\
+\'a0\'a0 \'a0 \'a0 \'a0        pv.page_name\
+\'a0 FROM first_touch AS \'91ft\'92\
+\'a0 JOIN page_visits AS 'pv'\
+\'a0 \'a0 ON ft.user_id = pv.user_id\
+\'a0 \'a0\'a0AND ft.first_touch_at = pv.timestamp\
+)\
+SELECT ft_attr.utm_source,\
+\'a0\'a0 \'a0 \'a0         ft_attr.utm_campaign,\
+\'a0\'a0 \'a0 \'a0         COUNT(*)\
+FROM ft_attr\'a0\
+GROUP BY 1, 2\
+ORDER BY 3 DESC;\
+\
+WITH first_touch AS (\
+\'a0 \'a0 SELECT user_id,\
+\'a0 \'a0 \'a0 \'a0            MIN(timestamp) as first_touch_at\
+\'a0 \'a0 FROM page_visits\
+\'a0 \'a0 WHERE page_name = \'912 -shopping_cart'\
+\'a0 \'a0 GROUP BY user_id),\
+ft_attr AS (\
+\'a0 SELECT ft.user_id,\
+\'a0\'a0 \'a0 \'a0 \'a0         ft.first_touch_at,\
+\'a0\'a0 \'a0 \'a0 \'a0         pv.utm_source,\
+\'a0\'a0 \'a0 \'a0 \'a0         pv.utm_campaign,\
+\'a0\'a0 \'a0 \'a0 \'a0         pv.page_name\
+\'a0 FROM first_touch AS \'91ft\'92\
+\'a0 JOIN page_visits AS 'pv'\
+\'a0 \'a0 ON ft.user_id = pv.user_id\
+\'a0 \'a0\'a0AND ft.first_touch_at = pv.timestamp\
+)\
+SELECT ft_attr.utm_source,\
+\'a0\'a0 \'a0 \'a0         ft_attr.utm_campaign,\
+\'a0\'a0 \'a0 \'a0         COUNT(*)\
+FROM ft_attr\'a0\
+GROUP BY 1, 2\
+ORDER BY 3 DESC;\
+\
+\
+WITH first_touch AS (\
+\'a0 \'a0 SELECT user_id,\
+\'a0 \'a0 \'a0 \'a0            MIN(timestamp) as first_touch_at\
+\'a0 \'a0 FROM page_visits\
+\'a0 \'a0 WHERE page_name = \'913 \'96 checkout'\
+\'a0 \'a0 GROUP BY user_id),\
+ft_attr AS (\
+\'a0 SELECT ft.user_id,\
+\'a0\'a0 \'a0 \'a0 \'a0         ft.first_touch_at,\
+\'a0\'a0 \'a0 \'a0 \'a0        pv.utm_source,\
+\'a0\'a0 \'a0 \'a0 \'a0        pv.utm_campaign,\
+\'a0\'a0 \'a0 \'a0 \'a0        pv.page_name\
+\'a0 FROM first_touch AS \'91ft\'92\
+\'a0 JOIN page_visits AS 'pv'\
+\'a0 \'a0 ON ft.user_id = pv.user_id\
+\'a0 \'a0\'a0AND ft.first_touch_at = pv.timestamp\
+)\
+SELECT ft_attr.utm_source,\
+\'a0\'a0 \'a0 \'a0         ft_attr.utm_campaign,\
+\'a0\'a0 \'a0 \'a0         COUNT(*)\
+FROM ft_attr\'a0\
+GROUP BY 1, 2\
+ORDER BY 3 DESC;\
+\
+WITH first_touch AS (\
+\'a0 \'a0 SELECT user_id,\
+\'a0 \'a0 \'a0 \'a0            MIN(timestamp) as first_touch_at\
+\'a0 \'a0 FROM page_visits\
+\'a0 \'a0 WHERE page_name = \'914 \'96 purchase'\
+\'a0 \'a0 GROUP BY user_id),\
+ft_attr AS (\
+\'a0 SELECT ft.user_id,\
+\'a0\'a0 \'a0 \'a0 \'a0         ft.first_touch_at,\
+\'a0\'a0 \'a0 \'a0 \'a0         pv.utm_source,\
+\'a0\'a0 \'a0 \'a0 \'a0         pv.utm_campaign,\
+\'a0\'a0 \'a0 \'a0 \'a0         pv.page_name\
+\'a0 FROM first_touch AS \'91ft\'92\
+\'a0 JOIN page_visits AS 'pv'\
+\'a0 \'a0 ON ft.user_id = pv.user_id\
+\'a0 \'a0\'a0AND ft.first_touch_at = pv.timestamp\
+)\
+SELECT ft_attr.utm_source,\
+\'a0\'a0 \'a0 \'a0         ft_attr.utm_campaign,\
+\'a0\'a0 \'a0 \'a0         COUNT(*)\
+FROM ft_attr\'a0\
+GROUP BY 1, 2\
+ORDER BY 3 DESC;\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\partightenfactor0
+
+\b \cf2 *Last Touch Attribution
+\b0 \
+\pard\pardeftab720\sl280\partightenfactor0
+\cf2 \
+WITH last_touch AS (\
+\'a0 \'a0 SELECT user_id,\
+\'a0 \'a0 \'a0 \'a0            MAX(timestamp) as last_touch_at\
+\'a0 \'a0 FROM page_visits\
+\'a0 \'a0 WHERE page_name = \'911 \'96 landing_page'\
+\'a0 \'a0 GROUP BY user_id),\
+lt_attr AS (\
+\'a0 SELECT lt.user_id,\
+\'a0\'a0 \'a0 \'a0 \'a0         lt.last_touch_at,\
+\'a0\'a0 \'a0 \'a0 \'a0         pv.utm_source,\
+\'a0\'a0 \'a0 \'a0 \'a0         pv.utm_campaign,\
+\'a0\'a0 \'a0 \'a0 \'a0         pv.page_name\
+\'a0 FROM last_touch AS 'lt\'92\
+\'a0 JOIN page_visits AS 'pv'\
+\'a0 \'a0 ON lt.user_id = pv.user_id\
+\'a0 \'a0\'a0AND lt.last_touch_at = pv.timestamp\
+)\
+SELECT lt_attr.utm_source,\
+\'a0\'a0 \'a0 \'a0         lt_attr.utm_campaign,\
+\'a0\'a0 \'a0 \'a0         COUNT(*)\
+FROM lt_attr\'a0\
+GROUP BY 1, 2\
+ORDER BY 3 DESC;\
+\
+WITH last_touch AS (\
+\'a0 \'a0 SELECT user_id,\
+\'a0 \'a0 \'a0 \'a0            MAX(timestamp) as last_touch_at\
+\'a0 \'a0 FROM page_visits\
+\'a0 \'a0 WHERE page_name = \'912 \'96 shopping_cart'\
+\'a0 \'a0 GROUP BY user_id),\
+lt_attr AS (\
+\'a0 SELECT lt.user_id,\
+\'a0\'a0 \'a0 \'a0 \'a0 lt.last_touch_at,\
+\'a0\'a0 \'a0 \'a0 \'a0 pv.utm_source,\
+\'a0\'a0 \'a0 \'a0 \'a0 pv.utm_campaign,\
+\'a0\'a0 \'a0 \'a0 \'a0 pv.page_name\
+\'a0 FROM last_touch AS 'lt\'92\
+\'a0 INNER JOIN page_visits AS 'pv'\
+\'a0 \'a0 ON lt.user_id = pv.user_id\
+\'a0 \'a0\'a0\'a0 AND lt.last_touch_at = pv.timestamp\
+)\
+SELECT lt_attr.utm_source,\
+\'a0\'a0 \'a0 \'a0         lt_attr.utm_campaign,\
+\'a0\'a0 \'a0 \'a0         COUNT(*)\
+FROM lt_attr\'a0\
+GROUP BY 1, 2\
+ORDER BY 3 DESC;\
+\
+WITH last_touch AS (\
+\'a0 \'a0 SELECT user_id,\
+\'a0 \'a0 \'a0 \'a0            MAX(timestamp) as last_touch_at\
+\'a0 \'a0 FROM page_visits\
+\'a0 \'a0 WHERE page_name = \'913 - checkout'\
+\'a0 \'a0 GROUP BY user_id),\
+lt_attr AS (\
+\'a0 SELECT lt.user_id,\
+\'a0\'a0 \'a0 \'a0 \'a0         lt.last_touch_at,\
+\'a0\'a0 \'a0 \'a0 \'a0         pv.utm_source,\
+\'a0\'a0 \'a0 \'a0 \'a0         pv.utm_campaign,\
+\'a0\'a0 \'a0 \'a0 \'a0         pv.page_name\
+\'a0 FROM last_touch AS 'lt\'92\
+\'a0 JOIN page_visits AS 'pv'\
+\'a0 \'a0 ON lt.user_id = pv.user_id\
+\'a0 \'a0\'a0AND lt.last_touch_at = pv.timestamp\
+)\
+SELECT lt_attr.utm_source,\
+\'a0\'a0 \'a0\'a0\'a0\'a0        lt_attr.utm_campaign,\
+\'a0\'a0 \'a0 \'a0         COUNT(*)\
+FROM lt_attr\'a0\
+GROUP BY 1, 2\
+ORDER BY 3 DESC;\
+\
+WITH last_touch AS (\
+\'a0 \'a0 SELECT user_id,\
+\'a0 \'a0 \'a0 \'a0            MAX(timestamp) as last_touch_at\
+\'a0 \'a0 FROM page_visits\
+\'a0 \'a0 WHERE page_name = '4 - purchase'\
+\'a0 \'a0 GROUP BY user_id),\
+lt_attr AS (\
+\'a0 SELECT lt.user_id,\
+\'a0\'a0 \'a0 \'a0 \'a0         lt.last_touch_at,\
+\'a0\'a0 \'a0 \'a0 \'a0         pv.utm_source,\
+\'a0\'a0 \'a0 \'a0 \'a0         pv.utm_campaign,\
+\'a0\'a0 \'a0 \'a0 \'a0         pv.page_name\
+\'a0 FROM last_touch AS 'lt\'92\
+\'a0 JOIN page_visits AS 'pv'\
+\'a0 \'a0 ON lt.user_id = pv.user_id\
+\'a0 \'a0\'a0AND lt.last_touch_at = pv.timestamp\
+)\
+SELECT lt_attr.utm_source,\
+\'a0\'a0 \'a0 \'a0         lt_attr.utm_campaign,\
+\'a0\'a0 \'a0 \'a0         COUNT(*)\
+FROM lt_attr\'a0\
+GROUP BY 1, 2\
+ORDER BY 3 DESC;\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\partightenfactor0
+
+\b \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\partightenfactor0
+
+\b0 \cf2 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\partightenfactor0
+
+\b \cf2 \
+\
+\
+\
+\
+}
